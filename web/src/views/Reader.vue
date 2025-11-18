@@ -241,7 +241,7 @@
       <div class="bottom-bar" ref="bottom">
         <span v-if="isSlideRead">{{
           `第${currentPage}/${totalPages}页 ${readingProgress}`
-        }}</span>
+          }}</span>
         <span v-if="isSlideRead">{{ timeStr }}</span>
         <span class="bottom-btn" v-if="show && !isSlideRead && !error && !isScrollRead"
           @click="toNextChapter()">加载下一章</span>
@@ -1266,10 +1266,9 @@ export default {
           this.computeShowChapterList(reset);
         });
       }
-      const scrollAnchor =
-        !reset && this.config.readMethod === "上下滚动"
-          ? this.captureScrollAnchor()
-          : null;
+      const scrollAnchor = !reset ? this.captureScrollAnchor() : null;
+      const shouldRestoreFromCache =
+        !reset && !scrollAnchor && this.config.readMethod === "上下滚动2";
       this.saveReadingPosition();
       // 暂停记录位置
       this.startSavePosition = false;
@@ -1282,7 +1281,7 @@ export default {
             // 切换上下章节，滚动到顶部
             this.toTop(0);
             this.startSavePosition = true;
-          } else if (this.config.readMethod === "上下滚动2") {
+          } else if (shouldRestoreFromCache) {
             this.autoShowPosition(true);
           } else {
             this.startSavePosition = true;
@@ -2308,10 +2307,36 @@ export default {
         return;
       }
       const newTop = paragraph.getBoundingClientRect().top;
-      const delta = anchor.offsetTop - newTop;
-      if (Math.abs(delta) > 1) {
+      const rawDelta = newTop - anchor.offsetTop;
+      const scrollElement =
+        document.scrollingElement ||
+        document.documentElement ||
+        document.body;
+      const currentScroll =
+        scrollElement.scrollTop ||
+        document.documentElement.scrollTop ||
+        document.body.scrollTop ||
+        0;
+      const viewportHeight =
+        (window.visualViewport && window.visualViewport.height) ||
+        window.innerHeight ||
+        this.windowSize.height ||
+        0;
+      const maxScroll = Math.max(
+        0,
+        (scrollElement.scrollHeight ||
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight ||
+          0) - viewportHeight
+      );
+      const clampedTarget = Math.max(
+        0,
+        Math.min(currentScroll + rawDelta, maxScroll)
+      );
+      const adjustment = clampedTarget - currentScroll;
+      if (Math.abs(adjustment) > 1) {
         // Keep the paragraph the user is reading at the same viewport offset.
-        this.scrollContent(delta, 0);
+        this.scrollContent(adjustment, 0);
       }
     },
     findChapterElement(node) {
@@ -2354,7 +2379,7 @@ export default {
           // }
         } else if (
           scrollTop >
-          document.documentElement.scrollHeight - 4 * this.windowSize.height // 倒数第三页
+          document.documentElement.scrollHeight - 4 * this.windowSize.height // 倒数第五页
         ) {
           // 往下滚动到 倒数第三页
           if (!this.preCaching && this.startSavePosition) {
