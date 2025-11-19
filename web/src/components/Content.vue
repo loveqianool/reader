@@ -208,10 +208,7 @@ export default {
           {this.showChapterList.map(chapter => {
             if (chapter.isVolume) {
               return (
-                <div
-                  key={chapter.index || chapter.title}
-                  class="content-body chapter-content reading-chapter volume-chapter"
-                >
+                <div class="content-body chapter-content reading-chapter volume-chapter">
                   <div class="volume-content">
                     <h3 data-pos={0}>{chapter.title}</h3>
                     <p class="volume-tag">{chapter.content}</p>
@@ -222,7 +219,6 @@ export default {
             let wordCount = chapter.title.length + 2; // 2为两个换行符
             return (
               <div
-                key={chapter.index}
                 class={[
                   "chapter-content",
                   this.readingBook.index === chapter.index
