@@ -331,7 +331,6 @@ export default {
       });
       this.getContent(bookmark.chapterIndex);
     });
-    this.syncMobileScrollbar();
   },
   activated() {
     this.init();
@@ -368,7 +367,7 @@ export default {
       //
     }
     this.$Lazyload.$on("loaded", this.lazyloadHandler);
-    this.syncMobileScrollbar();
+    this.setMobileScrollBarHidden(this.shouldHideMobileScrollBar);
   },
   deactivated() {
     this.saveBookProgress();
@@ -380,10 +379,10 @@ export default {
     this.unwatchFn && this.unwatchFn();
     this.releaseWakeLockFn && this.releaseWakeLockFn();
     this.$Lazyload.$off("loaded", this.lazyloadHandler);
-    this.setMobileScrollbarHidden(false);
+    this.setMobileScrollBarHidden(false);
   },
   beforeDestroy() {
-    this.setMobileScrollbarHidden(false);
+    this.setMobileScrollBarHidden(false);
   },
   watch: {
     chapterName(to) {
@@ -435,7 +434,6 @@ export default {
         this.scrollStartChapterIndex = this.chapterIndex;
         this.computeShowChapterList();
       }
-      this.syncMobileScrollbar();
     },
     windowSize() {
       // 在移动端滚动模式下，地址栏显示/隐藏会导致 innerHeight 变化
@@ -504,8 +502,8 @@ export default {
       this.content = this.filterContent(this.content);
       this.computeShowChapterList();
     },
-    isMiniInterface() {
-      this.syncMobileScrollbar();
+    shouldHideMobileScrollBar(val) {
+      this.setMobileScrollBarHidden(val);
     }
   },
   data() {
@@ -568,9 +566,6 @@ export default {
     windowSize() {
       return this.$store.state.windowSize;
     },
-    isMiniInterface() {
-      return this.$store.state.miniInterface;
-    },
     config() {
       return this.$store.getters.config;
     },
@@ -605,6 +600,9 @@ export default {
         (this.config.readMethod === "上下滚动" ||
           this.config.readMethod === "上下滚动2")
       );
+    },
+    shouldHideMobileScrollBar() {
+      return this.isScrollRead && this.$store.state.miniInterface;
     },
     chapterClass() {
       return this.isSlideRead
@@ -2638,6 +2636,20 @@ export default {
         this.computePages();
       }
     },
+    setMobileScrollBarHidden(hidden) {
+      if (typeof document === "undefined") {
+        return;
+      }
+      const body = document.body;
+      if (!body) {
+        return;
+      }
+      if (hidden) {
+        body.classList.add("mobile-scroll-read");
+      } else {
+        body.classList.remove("mobile-scroll-read");
+      }
+    },
     showCacheContent() {
       this.showCacheContentZone = !this.showCacheContentZone;
     },
@@ -2995,25 +3007,6 @@ export default {
         return;
       }
       this.showContentMatchParagraph(bookmark.bookText);
-    },
-    setMobileScrollbarHidden(hidden) {
-      if (typeof document === "undefined") {
-        return;
-      }
-      const className = "mobile-scroll-hidden";
-      [document.documentElement, document.body].forEach(el => {
-        if (!el) {
-          return;
-        }
-        if (hidden) {
-          el.classList.add(className);
-        } else {
-          el.classList.remove(className);
-        }
-      });
-    },
-    syncMobileScrollbar() {
-      this.setMobileScrollbarHidden(this.isScrollRead && this.isMiniInterface);
     }
   }
 };
@@ -3723,24 +3716,21 @@ export default {
 }
 </style>
 <style lang="stylus">
+body.mobile-scroll-read
+  -ms-overflow-style none
+  scrollbar-width none
+
+body.mobile-scroll-read::-webkit-scrollbar
+  width 0 !important
+  height 0 !important
+  display none
+
 .voice-list {
   .el-radio-button__inner {
     border-radius: 4px !important;
     border-left: 1px solid #DCDFE6;
     box-shadow: none;
   }
-}
-body.mobile-scroll-hidden,
-html.mobile-scroll-hidden {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-body.mobile-scroll-hidden::-webkit-scrollbar,
-html.mobile-scroll-hidden::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
 }
 .night-theme {
   .voice-list {
