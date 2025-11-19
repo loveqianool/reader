@@ -241,7 +241,7 @@
       <div class="bottom-bar" ref="bottom">
         <span v-if="isSlideRead">{{
           `第${currentPage}/${totalPages}页 ${readingProgress}`
-        }}</span>
+          }}</span>
         <span v-if="isSlideRead">{{ timeStr }}</span>
         <span class="bottom-btn" v-if="show && !isSlideRead && !error && !isScrollRead"
           @click="toNextChapter()">加载下一章</span>
@@ -331,6 +331,7 @@ export default {
       });
       this.getContent(bookmark.chapterIndex);
     });
+    this.syncMobileScrollbar();
   },
   activated() {
     this.init();
@@ -367,6 +368,7 @@ export default {
       //
     }
     this.$Lazyload.$on("loaded", this.lazyloadHandler);
+    this.syncMobileScrollbar();
   },
   deactivated() {
     this.saveBookProgress();
@@ -378,6 +380,10 @@ export default {
     this.unwatchFn && this.unwatchFn();
     this.releaseWakeLockFn && this.releaseWakeLockFn();
     this.$Lazyload.$off("loaded", this.lazyloadHandler);
+    this.setMobileScrollbarHidden(false);
+  },
+  beforeDestroy() {
+    this.setMobileScrollbarHidden(false);
   },
   watch: {
     chapterName(to) {
@@ -429,6 +435,7 @@ export default {
         this.scrollStartChapterIndex = this.chapterIndex;
         this.computeShowChapterList();
       }
+      this.syncMobileScrollbar();
     },
     windowSize() {
       // 在移动端滚动模式下，地址栏显示/隐藏会导致 innerHeight 变化
@@ -496,6 +503,9 @@ export default {
       this.title = this.filterContent(this.title);
       this.content = this.filterContent(this.content);
       this.computeShowChapterList();
+    },
+    isMiniInterface() {
+      this.syncMobileScrollbar();
     }
   },
   data() {
@@ -557,6 +567,9 @@ export default {
     },
     windowSize() {
       return this.$store.state.windowSize;
+    },
+    isMiniInterface() {
+      return this.$store.state.miniInterface;
     },
     config() {
       return this.$store.getters.config;
@@ -2379,7 +2392,7 @@ export default {
           // }
         } else if (
           scrollTop >
-          document.documentElement.scrollHeight - 4 * this.windowSize.height // 倒数第五页
+          document.documentElement.scrollHeight - 4 * this.windowSize.height // 倒数第四页
         ) {
           // 往下滚动到 倒数第三页
           if (!this.preCaching && this.startSavePosition) {
@@ -2982,6 +2995,25 @@ export default {
         return;
       }
       this.showContentMatchParagraph(bookmark.bookText);
+    },
+    setMobileScrollbarHidden(hidden) {
+      if (typeof document === "undefined") {
+        return;
+      }
+      const className = "mobile-scroll-hidden";
+      [document.documentElement, document.body].forEach(el => {
+        if (!el) {
+          return;
+        }
+        if (hidden) {
+          el.classList.add(className);
+        } else {
+          el.classList.remove(className);
+        }
+      });
+    },
+    syncMobileScrollbar() {
+      this.setMobileScrollbarHidden(this.isScrollRead && this.isMiniInterface);
     }
   }
 };
@@ -3697,6 +3729,18 @@ export default {
     border-left: 1px solid #DCDFE6;
     box-shadow: none;
   }
+}
+body.mobile-scroll-hidden,
+html.mobile-scroll-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+body.mobile-scroll-hidden::-webkit-scrollbar,
+html.mobile-scroll-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 .night-theme {
   .voice-list {
