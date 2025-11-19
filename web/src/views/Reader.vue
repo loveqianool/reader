@@ -241,7 +241,7 @@
       <div class="bottom-bar" ref="bottom">
         <span v-if="isSlideRead">{{
           `第${currentPage}/${totalPages}页 ${readingProgress}`
-          }}</span>
+        }}</span>
         <span v-if="isSlideRead">{{ timeStr }}</span>
         <span class="bottom-btn" v-if="show && !isSlideRead && !error && !isScrollRead"
           @click="toNextChapter()">加载下一章</span>
@@ -1269,11 +1269,19 @@ export default {
       const scrollAnchor = !reset ? this.captureScrollAnchor() : null;
       const shouldRestoreFromCache =
         !reset && !scrollAnchor && this.config.readMethod === "上下滚动2";
+      const firstIndex = list.length ? list[0].index : this.chapterIndex;
+      const lastIndex = list.length
+        ? list[list.length - 1].index
+        : this.chapterIndex;
       this.saveReadingPosition();
       // 暂停记录位置
       this.startSavePosition = false;
       // 记录当前章节
-      this.showChapterList = list;
+      if (reset || !this.showChapterList.length) {
+        this.showChapterList = list;
+      } else {
+        this.syncChapterList(list, firstIndex, lastIndex);
+      }
       this.$nextTick(() => {
         this.restoreScrollAnchor(scrollAnchor);
         this.computePages(() => {
@@ -1288,6 +1296,31 @@ export default {
           }
         });
       });
+    },
+    syncChapterList(nextList, firstIndex, lastIndex) {
+      const nextIndexSet = new Set();
+      nextList.forEach(chapter => {
+        nextIndexSet.add(chapter.index);
+        const existingIdx = this.showChapterList.findIndex(
+          item => item.index === chapter.index
+        );
+        if (existingIdx >= 0) {
+          this.$set(this.showChapterList, existingIdx, chapter);
+        } else {
+          this.showChapterList.push(chapter);
+        }
+      });
+      for (let i = this.showChapterList.length - 1; i >= 0; i--) {
+        const chapter = this.showChapterList[i];
+        if (
+          !nextIndexSet.has(chapter.index) ||
+          typeof chapter.index === "undefined" ||
+          chapter.index < firstIndex ||
+          chapter.index > lastIndex
+        ) {
+          this.showChapterList.splice(i, 1);
+        }
+      }
     },
     saveBookProgress() {
       return Axios.post(
