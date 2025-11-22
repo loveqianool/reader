@@ -1251,7 +1251,10 @@ export default {
         return Promise.resolve();
       }
       const list = [];
-      let startIndex = this.scrollStartChapterIndex || this.chapterIndex;
+      let startIndex = this.scrollStartChapterIndex;
+      if (typeof startIndex !== "number") {
+        startIndex = this.chapterIndex;
+      }
       if (this.config.readMethod === "上下滚动2") {
         startIndex = this.chapterIndex - this.showPrevChapterSize;
       }
@@ -1277,9 +1280,20 @@ export default {
           this.computeShowChapterList(reset);
         });
       }
-      const scrollAnchor = !reset ? this.captureScrollAnchor() : null;
+      let needRestore = true;
+      if (
+        this.showChapterList.length &&
+        list.length &&
+        this.showChapterList[0].index === list[0].index
+      ) {
+        needRestore = false;
+      }
+      const scrollAnchor = !reset && needRestore ? this.captureScrollAnchor() : null;
       const shouldRestoreFromCache =
-        !reset && !scrollAnchor && this.config.readMethod === "上下滚动2";
+        !reset &&
+        needRestore &&
+        !scrollAnchor &&
+        this.config.readMethod === "上下滚动2";
       this.saveReadingPosition();
       // 暂停记录位置
       this.startSavePosition = false;
