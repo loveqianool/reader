@@ -1080,7 +1080,7 @@ export default {
             this.loading.close();
           }
           if (this.isScrollRead) {
-            this.computeShowChapterList();
+            this.computeShowChapterList(true);
           }
         },
         error => {
@@ -1107,7 +1107,7 @@ export default {
             "获取章节内容失败 " + (error && error.toString())
           );
           if (this.isScrollRead) {
-            this.computeShowChapterList();
+            this.computeShowChapterList(true);
           }
           throw error;
         }
