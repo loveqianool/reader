@@ -2658,13 +2658,16 @@ export default {
         return;
       }
       const body = document.body;
-      if (!body) {
+      const html = document.documentElement;
+      if (!body || !html) {
         return;
       }
       if (hidden) {
         body.classList.add("mobile-scroll-read");
+        html.classList.add("mobile-scroll-read");
       } else {
         body.classList.remove("mobile-scroll-read");
+        html.classList.remove("mobile-scroll-read");
       }
     },
     showCacheContent() {
@@ -3733,11 +3736,13 @@ export default {
 }
 </style>
 <style lang="stylus">
-body.mobile-scroll-read
+body.mobile-scroll-read,
+html.mobile-scroll-read
   -ms-overflow-style none
   scrollbar-width none
 
-body.mobile-scroll-read::-webkit-scrollbar
+body.mobile-scroll-read::-webkit-scrollbar,
+html.mobile-scroll-read::-webkit-scrollbar
   width 0 !important
   height 0 !important
   display none
