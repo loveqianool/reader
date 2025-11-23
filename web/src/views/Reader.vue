@@ -1038,6 +1038,9 @@ export default {
       let chapterIndex = this.$store.getters.readingBook.catalog[index].index;
       this.title = chapterName;
       const now = new Date().getTime();
+      if (this.isScrollRead) {
+        this.scrollStartChapterIndex = chapterIndex;
+      }
       this.getBookContent(chapterIndex, {}, refresh).then(
         res => {
           if (
