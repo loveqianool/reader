@@ -1314,12 +1314,12 @@ export default {
         });
       });
     },
-    saveBookProgress() {
+    saveBookProgress(index) {
       return Axios.post(
         this.api + "/saveBookProgress",
         {
           url: this.$store.getters.readingBook.bookUrl,
-          index: this.chapterIndex
+          index: index !== undefined ? index : this.chapterIndex
         },
         {
           silent: true
@@ -2516,7 +2516,7 @@ export default {
                   book.index = chapterIndex;
                   this.$store.commit("setReadingBook", book);
                   // 保存阅读进度
-                  this.saveBookProgress();
+              this.saveBookProgress(chapterIndex);
                   this.title = this.$store.getters.readingBook.catalog[
                     chapterIndex
                   ].title;
